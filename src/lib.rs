@@ -11,7 +11,57 @@ mod adapter;
 mod entity;
 mod constants;
 
-pub fn run(root: &Path) -> Result<(), &'static str> {
+pub fn run(root: &Path, command: String) -> Result<(), &'static str> {
+    if command.is_empty() {
+        add_new_files(root)
+    } else if command == "check" {
+        check_stored_files(root)
+    } else if command == "reindex" {
+        rebuild_index(root)
+    } else {
+        Err("bad command")
+    }
+}
+
+fn rebuild_index(root: &Path) -> Result<(), &'static str> {
+    let locations = FileLocation::new(root);
+    locations.create_locations();
+    let file_loader = FileLoader { locations: &locations };
+    let files_text = locations.stored_files()
+        .into_iter()
+        .map(|file_path| FileLoader::read_stored_file(&file_path)
+            .encode_stored_file(&locations.store_path)
+        )
+        .collect();
+    file_loader.save_stored_files(files_text);
+    Ok(())
+}
+
+fn check_stored_files(root: &Path) -> Result<(), &'static str> {
+    let locations = FileLocation::new(root);
+    locations.create_locations();
+    let file_loader = FileLoader { locations: &locations };
+
+    let (mut files, _) = file_loader.load_stored_file();
+    let check_files_iterator = locations.stored_files()
+        .into_iter()
+        .map(|file_path| FileLoader::read_new_file(&file_path));
+    files.extend(check_files_iterator);
+    files.into_iter()
+        .fold(FileStorage::new(), group_by_hash)
+        .into_values()
+        .filter(|files| !is_correct_files(files))
+        .for_each(|files| {
+            eprintln!("{files:?}\n");
+        });
+    Ok(())
+}
+
+fn is_correct_files(files: &Vec<ProcessedFile>) -> bool {
+    files.len() == 2
+}
+
+fn add_new_files(root: &Path) -> Result<(), &'static str> {
     let locations = FileLocation::new(root);
     locations.create_locations();
     let file_loader = FileLoader { locations: &locations };

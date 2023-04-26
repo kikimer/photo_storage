@@ -32,6 +32,10 @@ impl FileLocation {
         FileLoader::find_files_recursive(&self.new_files_path)
     }
 
+    pub fn stored_files(&self) -> Vec<PathBuf> {
+        FileLoader::find_files_recursive(&self.store_path)
+    }
+
     pub fn get_duplicates_filenames(&self) -> HashSet<String> {
         let mut duplicate_names = HashSet::new();
         FileLoader::find_files_recursive(&self.duplicates_path).into_iter()

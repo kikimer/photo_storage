@@ -66,6 +66,16 @@ impl<'a> FileLoader<'a> {
         }
     }
 
+    pub fn read_stored_file(file_path: &PathBuf) -> ProcessedFile {
+        let file = File::open(file_path).unwrap();
+        let metadata = file.metadata().unwrap();
+        ProcessedFile::Stored {
+            hash: crypto::get_hash(&file),
+            size: metadata.len(),
+            path: file_path.to_owned(),
+        }
+    }
+
     pub fn move_duplicate(&self, file: &ProcessedFile) {
         if let ProcessedFile::Duplicate { path, stored_path, duplicate_path, ln_path, .. } = file {
             if !duplicate_path.exists() && !ln_path.exists() {
