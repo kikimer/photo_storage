@@ -11,19 +11,8 @@ mod adapter;
 mod entity;
 mod constants;
 
-pub fn run(root: &Path, command: String) -> Result<(), &'static str> {
-    if command.is_empty() {
-        add_new_files(root)
-    } else if command == "check" {
-        check_stored_files(root)
-    } else if command == "reindex" {
-        rebuild_index(root)
-    } else {
-        Err("bad command")
-    }
-}
-
-fn rebuild_index(root: &Path) -> Result<(), &'static str> {
+pub fn rebuild_index(root: &Path) -> Result<(), &'static str> {
+    println!("start reindex");
     let locations = FileLocation::new(root);
     locations.create_locations();
     let file_loader = FileLoader { locations: &locations };
@@ -34,10 +23,12 @@ fn rebuild_index(root: &Path) -> Result<(), &'static str> {
         )
         .collect();
     file_loader.save_stored_files(files_text);
+    println!("done reindex");
     Ok(())
 }
 
-fn check_stored_files(root: &Path) -> Result<(), &'static str> {
+pub fn check_stored_files(root: &Path) -> Result<(), &'static str> {
+    println!("start check");
     let locations = FileLocation::new(root);
     locations.create_locations();
     let file_loader = FileLoader { locations: &locations };
@@ -54,6 +45,7 @@ fn check_stored_files(root: &Path) -> Result<(), &'static str> {
         .for_each(|files| {
             eprintln!("{files:?}\n");
         });
+    println!("done check");
     Ok(())
 }
 
@@ -61,7 +53,8 @@ fn is_correct_files(files: &Vec<ProcessedFile>) -> bool {
     files.len() == 2
 }
 
-fn add_new_files(root: &Path) -> Result<(), &'static str> {
+pub fn add_new_files(root: &Path) -> Result<(), &'static str> {
+    println!("start add new files");
     let locations = FileLocation::new(root);
     locations.create_locations();
     let file_loader = FileLoader { locations: &locations };
@@ -101,7 +94,7 @@ fn add_new_files(root: &Path) -> Result<(), &'static str> {
         .map(|file| file.encode_stored_file(&locations.store_path))
         .collect();
     file_loader.save_stored_files(processed_files_text);
-
+    println!("done add new files");
     Ok(())
 }
 
